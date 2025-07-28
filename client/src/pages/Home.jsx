@@ -4,59 +4,57 @@ import axios from 'axios';
 import TaskForm from '../components/TaskForm';
 import TaskItem from '../components/TaskItem';
 
+const API_URL = 'https://todo-task-c8zb.onrender.com/api/tasks';
+
 export default function Home() {
   const { token, logout } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all'); 
-
-  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  const [filter, setFilter] = useState('all');
 
   useEffect(() => {
-    fetchTasks();
-  }, []);
-
- const fetchTasks = async () => {
-  try {
-    const { data } = await axios.get('/api/tasks');
-    console.log('Fetched tasks:', data);
-
-    if (Array.isArray(data)) {
-      setTasks(data);
-    } else {
-      setTasks([]); 
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      fetchTasks();
     }
+  }, [token]); // rerun if token changes
 
-  } catch (error) {
-    console.error('Error fetching tasks:', error);
-    if (error.response?.status === 401) {
-      logout();
+  const fetchTasks = async () => {
+    try {
+      const { data } = await axios.get(API_URL);
+      console.log('Fetched tasks:', data);
+      setTasks(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      if (error.response?.status === 401) {
+        logout();
+      }
+      setTasks([]);
+    } finally {
+      setLoading(false);
     }
-    setTasks([]); 
-  } finally {
-    setLoading(false);
-  }
-};
+  };
+
   const addTask = async (title) => {
-    const { data } = await axios.post('https://todo-task-c8zb.onrender.com/api/tasks', { title });
+    const { data } = await axios.post(API_URL, { title });
     setTasks([data, ...tasks]);
   };
 
   const toggleTask = async (task) => {
-    const { data } = await axios.put(`https://todo-task-c8zb.onrender.com/api/tasks/${task._id}`, {
+    const { data } = await axios.put(`${API_URL}/${task._id}`, {
       completed: !task.completed
     });
     setTasks(tasks.map(t => t._id === task._id ? data : t));
   };
 
   const updateTask = async (taskId, title) => {
-    const { data } = await axios.put(`https://todo-task-c8zb.onrender.com/api/tasks/${taskId}`, { title });
+    const { data } = await axios.put(`${API_URL}/${taskId}`, { title });
     setTasks(tasks.map(t => t._id === taskId ? data : t));
   };
 
   const deleteTask = async (task) => {
     if (window.confirm('Are you sure you want to delete this task?')) {
-      await axios.delete(`https://todo-task-c8zb.onrender.com/api/tasks/${task._id}`);
+      await axios.delete(`${API_URL}/${task._id}`);
       setTasks(tasks.filter(t => t._id !== task._id));
     }
   };
@@ -64,7 +62,7 @@ export default function Home() {
   const filteredTasks = tasks.filter(task => {
     if (filter === 'active') return !task.completed;
     if (filter === 'completed') return task.completed;
-    return true; 
+    return true;
   });
 
   const completedCount = tasks.filter(task => task.completed).length;
@@ -81,7 +79,6 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-2xl mx-auto px-4">
-     
         <header className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-4xl font-bold text-gray-800">My Tasks</h1>
@@ -89,10 +86,7 @@ export default function Home() {
               {activeCount} active, {completedCount} completed
             </p>
           </div>
-          <button
-            onClick={logout}
-            className="btn-secondary"
-          >
+          <button onClick={logout} className="btn-secondary">
             Logout
           </button>
         </header>
@@ -126,9 +120,11 @@ export default function Home() {
         <div className="bg-white rounded-lg shadow-sm">
           {filteredTasks.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
-              {filter === 'all' ? 'No tasks yet. Add one above!' :
-               filter === 'active' ? 'No active tasks!' :
-               'No completed tasks!'}
+              {filter === 'all'
+                ? 'No tasks yet. Add one above!'
+                : filter === 'active'
+                ? 'No active tasks!'
+                : 'No completed tasks!'}
             </div>
           ) : (
             <ul className="divide-y divide-gray-200">
