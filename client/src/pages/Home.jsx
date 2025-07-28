@@ -38,25 +38,25 @@ export default function Home() {
   }
 };
   const addTask = async (title) => {
-    const { data } = await axios.post('http://localhost:5000/api/tasks', { title });
+    const { data } = await axios.post('https://todo-task-c8zb.onrender.com/api/tasks', { title });
     setTasks([data, ...tasks]);
   };
 
   const toggleTask = async (task) => {
-    const { data } = await axios.put(`http://localhost:5000/api/tasks/${task._id}`, {
+    const { data } = await axios.put(`https://todo-task-c8zb.onrender.com/api/tasks/${task._id}`, {
       completed: !task.completed
     });
     setTasks(tasks.map(t => t._id === task._id ? data : t));
   };
 
   const updateTask = async (taskId, title) => {
-    const { data } = await axios.put(`http://localhost:5000/api/tasks${taskId}`, { title });
+    const { data } = await axios.put(`https://todo-task-c8zb.onrender.com/api/tasks/${taskId}`, { title });
     setTasks(tasks.map(t => t._id === taskId ? data : t));
   };
 
   const deleteTask = async (task) => {
     if (window.confirm('Are you sure you want to delete this task?')) {
-      await axios.delete(`http://localhost:5000/api/tasks/${task._id}`);
+      await axios.delete(`https://todo-task-c8zb.onrender.com/api/tasks/${task._id}`);
       setTasks(tasks.filter(t => t._id !== task._id));
     }
   };
